@@ -20,16 +20,11 @@
     <button onclick="startVideo()">Clear</button>
   </body>
   <style>
-    body {
-      align-items: center;
-    }
     button {
       position: relative;
       z-index: 20;
     }
     canvas {
-      margin: 0;
-      padding: 0;
       position: absolute;
       z-index: 10;
       top: 0;
@@ -37,8 +32,6 @@
       background-color: rgba(255, 100, 0, 0.2);
     }
     video {
-      margin: 0;
-      padding: 0;
       z-index: 00;
       top: 0;
       left: 0;
@@ -103,10 +96,9 @@
       var posicionY = 0;
       const displaySize = { width: video.width, height: video.height };
       refreshSquare = setInterval(async () => {
-        const detections = await faceapi.detectSingleFace(
-          video,
-          new faceapi.TinyFaceDetectorOptions()
-        );
+        const detections = await faceapi
+          .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks();
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
         if (detections) {
@@ -115,13 +107,13 @@
             height: video.height,
           });
           canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-
+          console.log(detections);
           if (
             isStill(
               posicionX,
               posicionY,
-              detections._box._x,
-              detections._box._y
+              detections.detection._box._x,
+              detections.detection._box._y
             )
           ) {
             stillenes += 1;
@@ -134,15 +126,20 @@
           }
           var msgToUser = stillMsg(stillenes);
           // console.log(detectionsForSize);
-          const faceBox = new faceapi.draw.DrawBox(detectionsForSize._box, {
-            label: msgToUser,
-            fontSize: 100,
-            boxColor: stillColor(stillenes),
-            lineWidth: 4,
-          });
+          faceapi.draw.drawFaceLandmarks(canvas, detectionsForSize);
+          const faceBox = new faceapi.draw.DrawBox(
+            detectionsForSize.detection._box,
+            {
+              label: msgToUser,
+              fontSize: 100,
+              boxColor: stillColor(stillenes),
+              lineWidth: 4,
+            }
+          );
           faceBox.draw(canvas);
+          console.log(detectionsForSize.detection._box);
           const documentBox = new faceapi.draw.DrawBox(
-            sizeDocumentBox(detectionsForSize._box),
+            sizeDocumentBox(detectionsForSize.detection._box),
             {
               label: 'make sure the id is  \n within this box',
               boxColor: 'rgba(250, 236, 40, 1)',
@@ -156,8 +153,8 @@
           );
           documentBox.draw(canvas);
 
-          posicionX = detections._box._x;
-          posicionY = detections._box._y;
+          posicionX = detections.detection._box._x;
+          posicionY = detections.detection._box._y;
         }
       }, 700);
     });
