@@ -6,3 +6,4 @@ allows to check the face in a document and then captures it uses a mobile camera
 
 npm install serve
 serve
+go to enable it
