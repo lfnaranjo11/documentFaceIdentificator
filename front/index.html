@@ -28,6 +28,7 @@
   </style>
   <script>
     const canvas = document.querySelector('#id_you_like');
+    var refreshSquare;
     canvas.setAttribute('width', window.innerWidth);
     canvas.setAttribute('height', window.innerHeight);
     var video = document.querySelector('#videoElement');
@@ -59,34 +60,58 @@
       }
     }
     video.addEventListener('play', () => {
+      var targetStillnes = 5;
+      var stillenes = 0;
+      var posicionX = 0;
+      var posicionY = 0;
       const displaySize = { width: video.width, height: video.height };
-      setInterval(async () => {
+      refreshSquare = setInterval(async () => {
+        console.log('sigue');
         const detections = await faceapi.detectSingleFace(
           video,
           new faceapi.TinyFaceDetectorOptions()
         );
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
         if (detections) {
-          //console.log('detected');
           const detectionsForSize = faceapi.resizeResults(detections, {
             width: video.width,
             height: video.height,
           });
           canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-          if (detections._score > 0.7) {
-            // console.log(detections);
+          if (
+            isStill(
+              posicionX,
+              posicionY,
+              detections._box._x,
+              detections._box._y
+            )
+          ) {
+            stillenes += 1;
+          } else {
+            stillenes = 0;
+          }
+          if (stillenes == targetStillnes) {
+            console.log('taking sc');
             doScreenshot();
           }
           faceapi.draw.drawDetections(canvas, detectionsForSize);
+          posicionX = detections._box._x;
+          posicionY = detections._box._y;
         }
       }, 700);
     });
-    const doScreenshot = () => {
-      var canvas = document.querySelector('#id_you_like');
 
-      canvas.getContext('2d').drawImage(video, 0, 0);
+    const isStill = (oldX, oldY, x, y) => {
+      if (Math.sqrt(Math.pow(oldX - x, 2) + Math.pow(oldY - y, 2)) < 10) {
+        return true;
+      }
+      return false;
+    };
+    const doScreenshot = () => {
+      clearInterval(refreshSquare);
+      video.pause();
+      // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     };
   </script>
 </html>
