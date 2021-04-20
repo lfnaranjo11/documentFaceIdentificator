@@ -8,7 +8,17 @@ Promise.all([
   faceapi.nets.faceLandmark68Net.loadFromUri('./public/models'),
   faceapi.nets.faceRecognitionNet.loadFromUri('./public/models'),
 ])
-  .then(startVideo)
+  .then(() => {
+    var x = document.getElementsByClassName('loader')[0];
+
+    if (x.style.display === 'none') {
+      x.style.display = 'block';
+    } else {
+      x.style.display = 'none';
+    }
+
+    startVideo();
+  })
   .catch((e) => {
     console.log(e);
   });
@@ -22,6 +32,8 @@ var video = document.querySelector('#videoElement');
 
 function startVideo() {
   userFeedBack.innerHTML = 'Make sure the id is whitin the yellow box';
+  var logo = document.getElementsByClassName('logo')[0];
+  logo.style.display = 'none';
 
   if (navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices
@@ -43,7 +55,7 @@ function startVideo() {
   }
 }
 video.addEventListener('play', () => {
-  var targetStillnes = 5;
+  var targetStillnes = 10;
   var stillenes = 0;
   var posicionX = 0;
   var posicionY = 0;
@@ -74,13 +86,13 @@ video.addEventListener('play', () => {
       if (stillenes == targetStillnes) {
         doScreenshot();
       }
-      var msgToUser = stillMsg(stillenes);
+      var msgToUser = stillMsg(stillenes, targetStillnes);
       const faceBox = new faceapi.draw.DrawBox(
         detectionsForSize.detection._box,
         {
           label: msgToUser,
           fontSize: 100,
-          boxColor: stillColor(stillenes),
+          boxColor: stillColor(stillenes, targetStillnes),
           lineWidth: 4,
         }
       );
@@ -88,9 +100,9 @@ video.addEventListener('play', () => {
       const documentBox = new faceapi.draw.DrawBox(
         sizeDocumentBox(detectionsForSize.detection._box),
         {
-          label: 'make sure the id is  \n within this box',
+          label: stillMsg(stillenes, targetStillnes),
           boxColor: 'rgba(250, 236, 40, 1)',
-          lineWidth: 4,
+          lineWidth: 8,
           drawLabelOptions: {
             fontSize: 50,
           },
@@ -105,36 +117,37 @@ video.addEventListener('play', () => {
 });
 
 const isStill = (oldX, oldY, x, y) => {
-  if (Math.sqrt(Math.pow(oldX - x, 2) + Math.pow(oldY - y, 2)) < 10) {
+  var precision = 5;
+  if (Math.sqrt(Math.pow(oldX - x, 2) + Math.pow(oldY - y, 2)) < precision) {
     return true;
   }
   return false;
 };
-const stillMsg = (stillenes) => {
+const stillMsg = (stillenes, targetStillnes) => {
   try {
     if (stillenes <= 1) {
-      return 'Detecting document, stay Still';
-    } else if (stillenes <= 3) {
-      return 'remain in that position';
-    } else if (stillenes < 5) {
-      return 'remain in that position, taking ';
-    } else if (stillenes == 5) {
+      return 'Detecting';
+    } else if (stillenes <= targetStillnes / 2) {
+      return ' stay Still';
+    } else if (stillenes < targetStillnes) {
+      return ' stay Still';
+    } else if (stillenes == targetStillnes) {
       return 'taking picture';
-    } else if (stillenes >= 5) {
-      return 'picture taked';
+    } else if (stillenes >= targetStillnes) {
+      return 'picture taken';
     }
   } catch (e) {}
   return 'picture taked';
 };
-const stillColor = (stillenes) => {
+const stillColor = (stillenes, targetStillnes) => {
   try {
     if (stillenes <= 1) {
       return 'rgb(220,220,220,1)';
-    } else if (stillenes <= 3) {
+    } else if (stillenes <= targetStillnes / 2) {
       return 'rgba(0, 0, 0, 1)';
-    } else if (stillenes < 5) {
+    } else if (stillenes < targetStillnes) {
       return 'rgb(144,238,144, 1)';
-    } else if (stillenes == 5) {
+    } else if (stillenes == targetStillnes) {
       return 'rgb(34,139,34, 1)';
     }
   } catch (e) {}
@@ -151,9 +164,15 @@ const sizeDocumentBox = (box) => {
   box._height += yUpperResize + yDownResize;
   return box;
 };
-const doScreenshot = () => {
-  userFeedBack.innerHTML = 'FOTO TOMADA';
+function doScreenshot() {
+  var logo = document.getElementsByClassName('logo')[0];
+
+  logo.style.display = 'block';
+  setInterval(async () => {
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  }, 1000);
+  userFeedBack.innerHTML = 'ID succesfully added';
   clearInterval(refreshSquare);
   video.pause();
   new faceapi.Rect(10, 10, 400, 300);
-};
+}

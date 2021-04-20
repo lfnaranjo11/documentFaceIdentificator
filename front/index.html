@@ -6,8 +6,12 @@
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <meta content="utf-8" http-equiv="encoding" />
     <link rel="shortcut icon" href="#" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div class="loader"></div>
+    <img src="./public/imgs/checked.svg" alt="checked" class="logo" />
+
     <canvas id="id_you_like"></canvas>
     <video
       autoplay="true"
@@ -16,11 +20,18 @@
       height="100%"
       muted
     ></video>
-    <h1 id="userFeedBack">Make sure the id is whitin the yellow box</h1>
+    <h1 id="userFeedBack">Loading the models</h1>
     <button onclick="startVideo()">Clear</button>
   </body>
   <style>
+    h1 {
+      position: relative;
+      z-index: 20;
+    }
     button {
+      height: 90px;
+      height: 90px;
+
       position: relative;
       z-index: 20;
     }
